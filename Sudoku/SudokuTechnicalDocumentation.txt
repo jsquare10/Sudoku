@@ -1,0 +1,219 @@
+SUDOKU APPLICATION - TECHNICAL DOCUMENTATION
+==========================================
+
+1. OVERVIEW
+-----------
+
+The Sudoku application is a desktop-based game implemented in Java using Swing for the user interface. It allows users to play Sudoku puzzles with different grid sizes (6x6 and 9x9) and difficulty levels (Beginner, Intermediate, and Expert). The application features a timer, pause/resume functionality, and the ability to check solutions.
+
+2. ARCHITECTURE AND CLASS STRUCTURE
+----------------------------------
+
+The application follows a simple architecture with clear separation of concerns:
+
+Sudoku Application
+├── Main.java             # Entry point of the application
+├── SudokuUI.java         # Main UI component and controller
+├── Sudoku.java           # Core game logic and puzzle generation
+├── StopWatch.java        # Timer functionality
+└── Inputs.java           # Input handling for number selection
+
+Class Relationships:
+- Main creates and displays an instance of SudokuUI
+- SudokuUI contains and manages instances of Sudoku and StopWatch
+- SudokuUI creates instances of Inputs when users click on empty cells
+- Inputs communicates back to SudokuUI to update cell values
+
+3. DETAILED CLASS DESCRIPTIONS
+-----------------------------
+
+3.1 Main.java
+-------------
+
+The entry point of the application. It has a single main method that creates a new instance of SudokuUI and makes it visible.
+
+public static void main(String[] args) {
+    new SudokuUI().setVisible(true);
+}
+
+3.2 SudokuUI.java
+-----------------
+
+The main UI component that extends javax.swing.JFrame. It serves as both the view and controller in the application.
+
+Key Components:
+- UI Elements: Menu bar, game board, control buttons (New Game, Reset Game, Pause, Resume, Submit)
+- Game State Variables: gameMode, grid, paused
+- Data Structures: 
+  - buttons[][]: 2D array of JButtons representing the Sudoku grid cells
+  - blocks[][]: 2D array of JPanels containing the buttons
+  - actionListener[][]: 2D array of ActionListeners for the buttons
+
+Key Methods:
+- initialize(): Sets up the initial game state
+- createBoard(int[][] puzzle): Creates the Sudoku board UI based on the puzzle data
+- viewInputs(JPanel block, JButton inputButton, int numOfInput): Displays the number input panel when a cell is clicked
+- setInput(String ans, JPanel block, JButton inputButton): Sets the selected number in a cell
+- getAns(): Retrieves the current state of the board as a 2D array
+- isAnsComplete(): Checks if all cells have been filled
+- showMessage(String message): Displays messages to the user
+- startTimer(): Starts the stopwatch in a separate thread
+
+3.3 Sudoku.java
+---------------
+
+Contains the core game logic, including puzzle generation, validation, and solution checking.
+
+Key Constants:
+- VALID_BOARD_9X9 and VALID_BOARD_6X6: Pre-defined valid Sudoku solutions
+- GRID_6X6 and GRID_9X9: Grid size constants
+- GAME_MODE_EXPART, GAME_MODE_MEDIUM, GAME_MODE_EASY: Difficulty level constants
+
+Key Methods:
+- getNewPuzzle(int grid, int gameMode): Generates a new puzzle based on grid size and difficulty
+- resetPuzzle(): Returns the current puzzle (for resetting the game)
+- check(int[][] board): Validates if the current solution is correct
+- createBoard(int[][] board): Creates a valid Sudoku board by applying transformations to a base board
+- createPuzzle(int[][] board, int mode): Creates a puzzle by removing numbers from a complete board
+- Helper methods for board manipulation:
+  - swapRows, swapCols, swapRowsAndCols, swapGrids, swapNums
+
+3.4 StopWatch.java
+-----------------
+
+Implements a timer to track gameplay duration.
+
+Key Methods:
+- start(): Starts the timer
+- stop(): Stops the timer
+- pause(): Pauses the timer and records the pause time
+- resume(): Resumes the timer, accounting for the paused duration
+- getElapsedTime(): Returns the elapsed time in milliseconds
+
+3.5 Inputs.java
+--------------
+
+A panel that displays number options (1-9 or 1-6) when a user clicks on an empty cell.
+
+Key Components:
+- Number buttons (one through nine)
+- References to the parent SudokuUI, the cell's JPanel, and the cell's JButton
+
+Key Methods:
+- setAns(ActionEvent evt): Handles button clicks and communicates the selected number back to SudokuUI
+
+4. FLOW OF EXECUTION
+-------------------
+
+1. Application Start:
+   - Main.main() creates and displays a SudokuUI instance
+   - SudokuUI constructor initializes a Sudoku instance, sets default game mode and grid size
+   - initialize() is called to set up the initial game state
+   - startTimer() starts the stopwatch in a separate thread
+
+2. Game Initialization:
+   - Sudoku.getNewPuzzle() generates a puzzle based on the selected grid size and difficulty
+   - SudokuUI.createBoard() creates the UI representation of the puzzle
+
+3. User Interaction:
+   - When a user clicks on an empty cell, viewInputs() is called to display the Inputs panel
+   - When a number is selected in the Inputs panel, setInput() is called to update the cell
+   - Control buttons (New Game, Reset, Pause, etc.) trigger their respective actions
+
+4. Game Completion:
+   - When the user clicks "Submit", isAnsComplete() checks if all cells are filled
+   - If complete, Sudoku.check() validates the solution
+   - A message is displayed indicating success or failure
+
+5. KEY FEATURES AND IMPLEMENTATION DETAILS
+-----------------------------------------
+
+5.1 Puzzle Generation
+--------------------
+
+The puzzle generation process follows these steps:
+1. Start with a valid Sudoku solution (from VALID_BOARD_9X9 or VALID_BOARD_6X6)
+2. Apply a series of transformations to create a new valid solution:
+   - Swap rows within the same horizontal grid
+   - Swap columns within the same vertical grid
+   - Swap entire horizontal grids
+   - Swap numbers throughout the board
+3. Remove a certain number of cells based on the difficulty level:
+   - Easy: ~50% of cells removed
+   - Medium: ~60% of cells removed
+   - Expert: ~75% of cells removed
+
+5.2 UI Implementation
+--------------------
+
+The Sudoku board is implemented as a nested structure:
+- A main board JPanel with a GridLayout
+- Inside this, a 2D array of blocks JPanels
+- Each block contains a button representing a cell
+
+This structure allows for easy styling and interaction handling. The UI is generated programmatically in the createBoard() method, which:
+1. Clears the existing board
+2. Creates new arrays for buttons, blocks, and action listeners
+3. Sets up the grid layout based on the puzzle size
+4. Creates and configures each cell
+5. Applies alternating background colors to create the visual grid pattern
+
+5.3 Input Handling
+-----------------
+
+When a user clicks on an empty cell:
+1. The viewInputs() method is called with references to the cell's panel, button, and the grid size
+2. An Inputs panel is created and added to the cell's position
+3. The Inputs panel displays buttons for valid numbers (1-9 for 9x9 grid, 1-6 for 6x6 grid)
+4. When a number is selected, the setAns() method in Inputs calls back to SudokuUI.setInput()
+5. The cell is updated with the selected number
+
+5.4 Timer Implementation
+-----------------------
+
+The timer is implemented using a StopWatch class and a separate thread:
+1. startTimer() creates a new thread that updates the time display
+2. The thread continuously calls stopWatch.getElapsedTime() and updates the UI
+3. When the game is paused, the paused flag prevents the UI from updating
+4. The StopWatch class handles the actual time tracking, accounting for pauses and resumes
+
+6. TECHNICAL CONSIDERATIONS
+--------------------------
+
+6.1 Swing UI Components
+----------------------
+
+The application uses standard Swing components:
+- JFrame for the main window
+- JPanel for container panels
+- JButton for interactive elements
+- JLabel for text display
+- JMenu, JMenuItem, and JRadioButtonMenuItem for the menu system
+
+The UI layout is managed using a combination of GridLayout and GroupLayout.
+
+6.2 Multithreading
+-----------------
+
+The application uses a separate thread for the timer to ensure that the UI remains responsive during gameplay. This thread continuously updates the time display without blocking the main UI thread.
+
+6.3 Data Structures
+-----------------
+
+The core data structure is a 2D array representing the Sudoku grid. This is used in various forms:
+- int[][] for the puzzle data in the Sudoku class
+- JButton[][] for the UI representation in the SudokuUI class
+
+6.4 Event Handling
+-----------------
+
+The application uses ActionListeners for handling user interactions:
+- Button clicks in the control panel
+- Menu item selections
+- Cell clicks on the Sudoku board
+- Number selection in the input panel
+
+7. CONCLUSION
+------------
+
+The Sudoku application demonstrates a clean separation of concerns with distinct classes for different aspects of functionality. The core game logic is separated from the UI components, making the code more maintainable and extensible. The application provides a complete Sudoku gaming experience with multiple difficulty levels, grid sizes, and features like timing and pause/resume functionality.
